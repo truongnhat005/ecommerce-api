@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Role {
+  rid      Int    @id @default(autoincrement())
+  roleName String @db.VarChar(255)
+  users    User[]
+}
+
+model MemberShip {
+  mid       Int    @id @default(autoincrement())
+  rank      String @db.VarChar(255)
+  condition Int
+  users User[]
+}
+
+model Product {
+  pid         Int     @id @default(autoincrement())
+  productName String  @db.VarChar(255)
+  price       Decimal @db.Decimal(10, 2)
+  description String? @db.Text
+  stock       Int
+
+  orderDetails OrderDetail[]
+}
+
+model User {
+  uid      Int    @id @default(autoincrement())
+  username String @unique @db.VarChar(255)
+  password String @db.VarChar(255)
+  fullName String @db.VarChar(255)
+  address  String @db.VarChar(255)
+  phone    String @db.VarChar(20)
+  email    String @unique @db.VarChar(255)
+  score Int @default(10)
+  rid      Int
+  mid      Int
+
+  role Role @relation(fields: [rid], references: [rid])
+  membership MemberShip @relation(fields: [mid], references: [mid])
+  orders Order[]
+}
+
+model Order {
+  oid       Int      @id @default(autoincrement())
+  orderDate DateTime @default(now())
+  uid       Int
+  total     Decimal  @db.Decimal(10, 2)
+
+  user User @relation(fields: [uid], references: [uid])
+  orderDetails OrderDetail[]
+  shipments Shipment[]
+}
+
+model OrderDetail {
+  oid      Int
+  pid      Int
+  quantity Int
+
+  order Order @relation(fields: [oid], references: [oid])
+  product Product @relation(fields: [pid], references: [pid])
+
+  @@id([oid, pid])
+}
+
+model Shipment {
+  sid          Int      @id @default(autoincrement())
+  oid          Int
+  shipmentDate DateTime
+  address      String   @db.VarChar(255)
+  status       String   @db.VarChar(50)
+
+  order Order @relation(fields: [oid], references: [oid])
+}
